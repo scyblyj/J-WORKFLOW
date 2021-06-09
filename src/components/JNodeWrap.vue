@@ -2,7 +2,6 @@
   <div class="node_wrap">
     <j-node :nodeOpts.sync="nodeOpts"></j-node>
 
-    <!-- <j-node-array :nodeCfg="nodeCfg"></j-node-array> -->
     <div class="end_node">
       <span class="end_node_icon">结束</span>
     </div>
@@ -12,67 +11,9 @@
 
 <script>
 import JNode from "./JNode.vue";
-// import JNodeArray from "./JNodeArray.vue";
 export default {
   data() {
     return {
-      // nodeCfg: [
-      //   {
-      //     id: "101",
-      //     type: 0, //0: 起点， 1：办理节点,  2:审批节点, 3:抄送节点, 9:条件分支
-      //     name: "流程开始",
-      //   },
-      //   {
-      //     id: "102",
-      //     type: 1,
-      //     name: "办理节点",
-      //   },
-      //   {
-      //     id: "103",
-      //     type: 2,
-      //     name: "审批节点",
-      //   },
-      //   {
-      //     id: "104",
-      //     type: 3,
-      //     name: "抄送节点",
-      //   },
-      //   {
-      //     id: "105",
-      //     type: 9,
-      //     name: "条件分支",
-      //     conditions: [
-      //       {
-      //         type: 10,
-      //         name: "条件1",
-      //         flow: [
-      //           {
-      //             type: 2,
-      //             name: "审批节点",
-      //           },
-      //           {
-      //             type: 3,
-      //             name: "抄送节点",
-      //           },
-      //         ],
-      //       },
-      //       {
-      //         type: 10,
-      //         name: "条件2",
-      //         flow: [
-      //           {
-      //             type: 2,
-      //             name: "审批节点",
-      //           },
-      //           {
-      //             type: 3,
-      //             name: "抄送节点",
-      //           },
-      //         ],
-      //       },
-      //     ],
-      //   },
-      // ],
       nodeOpts: {
         type: 0, //0: 起点， 1：办理节点,  2:审批节点, 3:抄送节点, 9:路由, 10:条件节点
         name: "流程开始",

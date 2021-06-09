@@ -50,60 +50,6 @@
         </div>
       </div>
       <j-add-node :childNode.sync="nodeOpts.childNode"></j-add-node>
-
-      <!-- <div class="node_condition" v-if="nodeOpts.type === 10">
-        <div class="node_condition_content">123</div>
-        <div class="node_condition_tips">请设置条件</div>
-      </div>
-      <div class="node" v-if="nodeOpts.type !== 10">
-        <div
-          class="title"
-          :style="{
-            backgroundColor: ['#3a5069', '#3296fa', '#ff943e', '#c2c2cb'][
-              nodeOpts.type
-            ],
-          }"
-        >
-          <div v-if="nodeOpts.type !== 0" class="not_root"></div>
-          <div class="title_name">{{ nodeOpts.name }}</div>
-          <div><i class="title_icon" :class="titleIconForType"></i></div>
-        </div>
-
-        <div class="content">
-          <div class="duty">
-            <div class="duty_name">未设置负责人</div>
-            <div class="duty_icon"><i class="el-icon-arrow-right"></i></div>
-          </div>
-          <div v-if="nodeOpts.type !== 0" class="extra">
-            <div class="status"></div>
-            <div class="op">
-              <el-tooltip
-                effect="dark"
-                content="复制节点"
-                :open-delay="300"
-                placement="bottom"
-              >
-                <i class="el-icon-copy-document op_icon" @click="dupNode()"></i>
-              </el-tooltip>
-              <el-tooltip
-                effect="dark"
-                content="删除节点"
-                :open-delay="300"
-                placement="bottom"
-              >
-                <i class="el-icon-delete op_icon" @click="delNode()"></i>
-              </el-tooltip>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <j-add-node :childNode.sync="nodeOpts.childNode"></j-add-node>
-
-      <j-node
-        v-if="nodeOpts.childNode"
-        :nodeOpts.sync="nodeOpts.childNode"
-      ></j-node> -->
     </div>
 
     <!-- 条件节点区域 -->
@@ -170,13 +116,13 @@
       :nodeOpts.sync="nodeOpts.childNode"
     ></j-node>
 
-    <!-- 配置页 -->
+    <!-- 流程开始配置页 -->
     <el-drawer
       :with-header="false"
-      :visible.sync="rootNodeDrawer"
+      :visible.sync="beginNodeDrawer"
       direction="rtl"
     >
-      <div class="drawer_header">流程开始</div>
+      <div class="drawer_header drawer_header_begin">流程开始</div>
       <div class="drawer_content">
         <!-- 发起人 -->
         <div class="drawer_content_creator">
@@ -198,10 +144,8 @@
           >
             <div class="dialog_creator_content">
               <div class="dialog_creator_left">
-                <div>选择可以发起此流程的人员</div>
                 <div>
                   <el-input
-                    placeholder="请输入内容"
                     size="small"
                     style="margin-top: 10px"
                   >
@@ -215,31 +159,15 @@
                     style="margin-top: 6px; height: 100%; overflow-y: auto"
                   >
                     <el-tab-pane label="按组织架构选择">
-                      <el-checkbox
-                        label="全选"
-                        style="
-                          display: block;
-                          line-height: 26px;
-                          font-weight: 600;
-                        "
-                        @change="allSwitchByDep"
-                      ></el-checkbox>
-                      <el-checkbox-group v-model="checkList">
-                        <el-checkbox
-                          v-for="(dep, idx) in depList"
-                          :key="idx"
-                          :label="dep"
-                          style="
-                            display: block;
-                            margin-left: 5px;
-                            line-height: 26px;
-                          "
-                        ></el-checkbox>
-                      </el-checkbox-group>
+                      <el-tree
+                        ref="tree"
+                        @check="checkCreator"
+                        :data="organizeList"
+                        show-checkbox
+                        :props="treeProps"
+                      ></el-tree>
                     </el-tab-pane>
-                    <el-tab-pane label="按角色选择">
-                      {{ checkList }}
-                    </el-tab-pane>
+                    <el-tab-pane label="按角色选择"> </el-tab-pane>
                   </el-tabs>
                 </div>
               </div>
@@ -255,35 +183,38 @@
                 >
                   <div
                     class="creator_selected_row"
-                    v-for="(item, idx) in checkList"
+                    v-for="(item, idx) in treeCheckedList"
                     :key="idx"
                   >
                     <div>
-                      {{ item }}
+                      {{ item.name }}
                     </div>
-                    <div class="creator_selected_del">
+                    <!-- <div class="creator_selected_del">
                       <el-tooltip
                         effect="dark"
                         content="删除"
                         :open-delay="300"
                         placement="bottom"
                       >
-                        <i class="el-icon-circle-close"></i>
+                        <i
+                          class="el-icon-circle-close"
+                          @click.stop="delSelectedItem(idx)"
+                        ></i>
                       </el-tooltip>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
               </div>
             </div>
             <div slot="footer">
-              <el-button type="primary" @click="creatorSelectOk"
+              <el-button type="primary" @click.stop="creatorSelectOk"
                 >确定</el-button
               >
               <el-button @click="creatorSelector = false">取消</el-button>
             </div>
           </el-dialog>
         </div>
-        <el-divider></el-divider>
+        <!-- <el-divider></el-divider> -->
         <!-- 字段权限 -->
         <div class="drawer_content_field_right">
           <div class="drawer_content_title">设置表单操作权限</div>
@@ -320,6 +251,34 @@
           </div>
         </div>
       </div>
+      <!-- 保存取消操作区 -->
+      <div class="drawer_op">
+        <el-button type="primary">保存</el-button>
+        <el-button>取消</el-button>
+      </div>
+    </el-drawer>
+
+    <!-- 办理节点配置页 -->
+    <el-drawer
+      :with-header="false"
+      :visible.sync="processNodeDrawer"
+      direction="rtl"
+    >
+      <div class="drawer_header drawer_header_process">办理节点</div>
+    </el-drawer>
+    <!-- 审批节点配置页 -->
+    <el-drawer
+      :with-header="false"
+      :visible.sync="approvalNodeDrawer"
+      direction="rtl"
+    >
+    </el-drawer>
+    <!-- 抄送节点配置页 -->
+    <el-drawer
+      :with-header="false"
+      :visible.sync="sendNodeDrawer"
+      direction="rtl"
+    >
     </el-drawer>
   </div>
 </template>
@@ -332,32 +291,61 @@ export default {
   props: ["nodeOpts"],
   data() {
     return {
-      rootNodeDrawer: false, // 流程开始配置页显示开关
-      creator: ["张三", "李四"], // 流程发起人
+      beginNodeDrawer: false, // 流程开始配置页显示开关
+      processNodeDrawer: false, // 办理节点配置页显示开关
+      approvalNodeDrawer: false, // 审批节点配置页显示开关
+      sendNodeDrawer: false, // 抄送节点配置页显示开关
+      creator: [], // 流程发起人
       creatorSelector: false, // 选择发起人对话框开关
-      depList: [
-        "开发部",
-        "测试部",
-        "市场部",
-        "后勤部",
-        "开发部",
-        "测试部",
-        "市场部",
-        "后勤部",
-        "开发部",
-        "测试部",
-        "市场部",
-        "后勤部",
-        "开发部",
-        "测试部",
-        "市场部",
-        "后勤部",
-        "开发部",
-        "测试部",
-        "市场部",
-        "后勤部",
-      ], // 部门列表
-      checkList: [], // 发起人选中列表
+      organizeList: [
+        {
+          id: 1,
+          name: "开发部",
+          subordinate: [
+            {
+              id: 101,
+              name: "前端组",
+              subordinate: [{ id: 1011, name: "张三" }],
+            },
+            {
+              id: 102,
+              name: "后端组",
+              subordinate: [
+                { id: 1021, name: "李四" },
+                { id: 1022, name: "王五" },
+              ],
+            },
+          ],
+        },
+        {
+          id: 2,
+          name: "后勤部",
+          subordinate: [
+            { id: 201, name: "点点" },
+            { id: 202, name: "叉叉" },
+            {
+              id: 203,
+              name: "商务组",
+              subordinate: [
+                {
+                  id: 2031,
+                  name: "哦哦",
+                  subordinate: [
+                    { id: 20311, name: "biubiu" },
+                    { id: 20312, name: "wowo" },
+                  ],
+                },
+                { id: 2032, name: "嗯嗯" },
+              ],
+            },
+          ],
+        },
+      ], // 组织架构列表
+      treeProps: {
+        label: "name",
+        children: "subordinate",
+      }, // 树形组件配置
+      treeCheckedList: [], // 已选中的发起人列表
       allRight: "", // 所有权限
       fieldsRight: [
         {
@@ -377,6 +365,7 @@ export default {
   },
   components: {
     JAddNode,
+    // JCheckbox,
   },
   mounted() {},
   computed: {
@@ -401,12 +390,42 @@ export default {
     },
     // 将发起人（数组）转换成字符串
     creatorForString() {
-      return this.creator.length > 1
-        ? this.creator.join(",")
-        : "点击选择发起人";
+      if (this.creator.length > 0) {
+        let res = [];
+        this.creator.forEach((item) => {
+          res.push(item.name);
+        });
+        return res.join(",");
+      } else {
+        return "点击选择可以发起此流程的人员";
+      }
     },
   },
   methods: {
+    // 在el-tree中选中或取消选中项目
+    checkCreator() {
+      let selectedItem = this.$refs.tree.getCheckedNodes();
+      this.treeCheckedList = this.getItemFromTree(selectedItem);
+    },
+
+    // 方法：获取实际选中的人员
+    getItemFromTree(arr) {
+      let res = [];
+      arr.forEach((item) => {
+        if (item.subordinate) {
+          this.getItemFromTree(item.subordinate);
+        } else {
+          res.push(item);
+        }
+      });
+      return res;
+    },
+
+    // 从列表中删除选中的发起人
+    delSelectedItem(idx) {
+      this.treeCheckedList.splice(idx, 1);
+    },
+    // 表单权限切换事件
     radioGroupChange(e) {
       console.log(e);
       switch (e) {
@@ -432,7 +451,7 @@ export default {
     },
     // 确定选择发起人
     creatorSelectOk() {
-      this.creator = [...this.checkList];
+      this.creator = [...this.treeCheckedList];
       this.creatorSelector = false;
     },
     // 按照组织机构切换全选开关
@@ -502,107 +521,19 @@ export default {
     showDrawer() {
       switch (this.nodeOpts.type) {
         case 0:
-          this.rootNodeDrawer = true;
+          this.beginNodeDrawer = true;
           break;
         case 1:
+          this.processNodeDrawer = true;
+          break;
+        case 2:
+          this.approvalNodeDrawer = true;
+          break;
+        case 3:
+          this.sendNodeDrawer = true;
           break;
       }
     },
-
-    // 向前移动
-    // moveUpNode() {
-    //   let arr = [];
-    //   // nodeObj是全局对象
-    //   console.log(this.mynodeObjs);
-    //   this.objToArr(this.nodeObjs, arr);
-
-    //   let currentNode, parentNode, childNode;
-
-    //   arr.forEach((item) => {
-    //     if (this.nodeOpts.id == item.id) {
-    //       currentNode = item;
-    //     } //自己
-    //     if (this.nodeOpts.parentNode == item.id) {
-    //       parentNode = item;
-    //     } //父亲
-
-    //     if (this.nodeOpts.id == item.parentNode) {
-    //       childNode = item;
-    //     } //儿子
-    //   });
-
-    //   let currentNodeId = currentNode.id;
-    //   let parentNodeId = parentNode.id;
-    //   let grandParentNodeId = parentNode.parentNode;
-
-    //   currentNode.parentNode = grandParentNodeId;
-    //   parentNode.parentNode = currentNodeId;
-    //   childNode.parentNode = parentNodeId;
-
-    //   let resObj = this.arrToObj(arr);
-    //   console.log(resObj);
-
-    //   // this.$emit("update:nodeObj", resObj);
-    //   console.log(resObj);
-    // },
-    // moveDownNode() {
-    //   let newNodeOpts = { ...this.nodeOpts.childNode }; //3
-
-    //   let newNodeOptsChild = newNodeOpts.childNode //4如果有
-    //     ? { ...newNodeOpts.childNode }
-    //     : null;
-
-    //   let movedNode = { ...this.nodeOpts }; //2
-
-    //   movedNode.childNode = newNodeOptsChild; //4放到2后    newNodeOptsChild.level+1
-    //   if (newNodeOptsChild) {
-    //     newNodeOptsChild.level -= 1;
-    //   }
-
-    //   this.addLevel(movedNode);
-    //   newNodeOpts.childNode = movedNode; //2放到3后  movedNode.level+1  newNodeOpts-1
-
-    //   newNodeOpts.level -= 1;
-    //   this.$emit("update:nodeOpts", newNodeOpts); //3放到2的位置
-    // },
-
-    // objToArr(obj, arr) {
-    //   let childNode;
-
-    //   if (obj !== null) {
-    //     //   console.log(obj);
-    //     childNode = obj.childNode ? { ...obj.childNode } : null;
-    //     delete obj.childNode;
-    //     arr.push(obj);
-
-    //     this.objToArr(childNode, arr);
-    //   }
-    // },
-
-    // arrToObj(arr, id) {
-    //   let res = null;
-    //   for (let i = 0; i < arr.length; i++) {
-    //     if (arr[i].parentNode == id) {
-    //       res = arr[i];
-    //       res.childNode = this.arrToObj(arr, arr[i].id);
-    //     }
-    //   }
-    //   return res;
-    // },
-
-    // addLevel(obj) {
-    //   obj.level++;
-    //   if (obj.childNode) {
-    //     this.addLevel(obj.childNode);
-    //   }
-    // },
-
-    // decLevel(obj) {
-    //   obj.level--;
-    //   if (obj.childNode) {
-    //     this.decLevel(obj.childNode);
-    //   }
-    // },
   },
 };
 </script>
@@ -880,7 +811,6 @@ export default {
 }
 
 .drawer_header {
-  background-color: #3a5069;
   padding-left: 10px;
   text-align: left;
   line-height: 50px;
@@ -888,9 +818,22 @@ export default {
   color: white;
 }
 
+.drawer_header_begin {
+  background-color: #3a5069;
+}
+.drawer_header_process {
+  background-color: #3296fa;
+}
+.drawer_header_approval {
+  background-color: #ff943e;
+}
+.drawer_header_send {
+  background-color: #c2c2cb;
+}
 .drawer_content {
   box-sizing: border-box;
-  height: calc(100vh - 50px);
+  height: calc(100vh - 100px);
+  border-bottom: 1px solid #ededed;
   overflow-y: auto;
 }
 
@@ -954,5 +897,29 @@ export default {
 .field_label {
   flex: 2;
   text-align: left;
+}
+
+.drawer_op {
+  margin-right: 20px;
+  line-height: 50px;
+  text-align: right;
+}
+
+.checkbox_dep_wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  line-height: 26px;
+  padding: 0 6px;
+}
+
+.checkbox_dep_wrap:hover {
+  background-color: #ededed;
+}
+
+.checkbox_dep {
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 </style>
